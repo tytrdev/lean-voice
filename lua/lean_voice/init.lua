@@ -172,7 +172,8 @@ end
 
 -- ---------------------------------------------------------------- terminal helpers
 
-local function float_term(cmd)
+local function float_term(cmd, opts)
+  opts = opts or {}
   local buf = vim.api.nvim_create_buf(false, true)
   local w, h = math.min(90, vim.o.columns - 8), math.min(24, vim.o.lines - 6)
   vim.api.nvim_open_win(buf, true, {
@@ -181,9 +182,16 @@ local function float_term(cmd)
   })
   vim.fn.jobstart(cmd, {
     term = true,
-    on_exit = function()
+    on_exit = function(_, code)
       vim.schedule(function()
-        if vim.api.nvim_buf_is_valid(buf) then vim.api.nvim_buf_delete(buf, { force = true }) end
+        if not vim.api.nvim_buf_is_valid(buf) then return end
+        if code == 0 and opts.close_on_success then
+          return vim.api.nvim_buf_delete(buf, { force = true })
+        end
+        -- Keep the output (errors especially) on screen until dismissed.
+        vim.keymap.set({ "n", "t" }, "q", function() vim.api.nvim_buf_delete(buf, { force = true }) end, { buffer = buf })
+        vim.notify(("lean-voice: %s exited with %d · press q to close"):format(vim.fs.basename(cmd[1]), code),
+          code == 0 and vim.log.levels.INFO or vim.log.levels.ERROR)
       end)
     end,
   })
@@ -192,7 +200,7 @@ end
 
 --- Pick the TTS voice (fzf list; moving the cursor plays a sample).
 function M.choose_voice()
-  float_term({ root .. "/bin/lv-voice" })
+  float_term({ root .. "/bin/lv-voice" }, { close_on_success = true })
 end
 
 M.root = root
