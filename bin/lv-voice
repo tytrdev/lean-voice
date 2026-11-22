@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Pick a TTS voice: moving the cursor plays a preview, Enter saves it.
+# Takes effect on the next spoken reply; no restart needed.
+set -euo pipefail
+LV="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
+TTS=("$LV/.venv/bin/python" -m lean_voice.tts)
+cd "$LV"
+
+choice=$("${TTS[@]}" voices | fzf \
+  --prompt 'voice> ' \
+  --header 'move to preview · enter to choose · esc to cancel  (af/am = American, bf/bm = British)' \
+  --bind "focus:execute-silent(${TTS[*]} preview {1})" \
+  --bind "esc:execute-silent(${TTS[*]} stop)+abort" \
+  | awk '{print $1}') || exit 0
+
+"${TTS[@]}" stop >/dev/null
+"${TTS[@]}" set voice "$choice" >/dev/null
+echo "voice set to $choice"

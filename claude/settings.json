@@ -1,0 +1,7 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "$LEAN_VOICE_HOME/.venv/bin/python $LEAN_VOICE_HOME/hooks/speak.py", "timeout": 5 }] }],
+    "PreToolUse": [{ "matcher": "*", "hooks": [{ "type": "command", "command": "$LEAN_VOICE_HOME/.venv/bin/python $LEAN_VOICE_HOME/hooks/speak.py", "timeout": 5 }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "$LEAN_VOICE_HOME/.venv/bin/python $LEAN_VOICE_HOME/hooks/speak.py", "timeout": 5 }] }]
+  }
+}

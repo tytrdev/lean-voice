@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="900" height="420" role="img" aria-label="lean-voice architecture: speech goes through the STT daemon into Claude Code via rex send; Claude's replies come back through hooks to the TTS daemon; Neovim shares cursor context and Lean goals come from lean-lsp-mcp.">
+  <style>
+    text { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; fill: #1f2328; }
+    .title { font-size: 15px; font-weight: 600; }
+    .sub { font-size: 11.5px; fill: #59636e; }
+    .label { font-size: 11.5px; }
+    .box { fill: #f6f8fa; stroke: #d1d9e0; stroke-width: 1.2; }
+    .in  { stroke: #0969da; fill: none; stroke-width: 2; }
+    .out { stroke: #bc4c00; fill: none; stroke-width: 2; }
+    .ctx { stroke: #818b98; fill: none; stroke-width: 1.5; stroke-dasharray: 5 4; }
+    .lin, .hin { fill: #0969da; } .lout, .hout { fill: #bc4c00; } .lctx { fill: #59636e; } .hctx { fill: #818b98; }
+    @media (prefers-color-scheme: dark) {
+      text { fill: #e6edf3; }
+      .sub, .lctx { fill: #9198a1; }
+      .box { fill: #151b23; stroke: #3d444d; }
+      .in { stroke: #4493f8; } .lin, .hin { fill: #4493f8; }
+      .out { stroke: #f0883e; } .lout, .hout { fill: #f0883e; }
+      .ctx { stroke: #7d8590; } .hctx { fill: #7d8590; }
+    }
+  </style>
+  <defs>
+    <marker id="a-in" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="hin" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="a-out" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="hout" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="a-ctx" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="hctx" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+
+  <!-- context: neovim cursor/selection to claude, over the top -->
+  <path class="ctx" d="M130,60 V28 H770 V184" marker-end="url(#a-ctx)"/>
+  <text class="label lctx" x="450" y="20" text-anchor="middle">cursor · selection  (claudecode.nvim)</text>
+
+  <!-- boxes -->
+  <rect class="box" x="40"  y="60"  width="180" height="64" rx="10"/>
+  <text class="title" x="130" y="88" text-anchor="middle">neovim</text>
+  <text class="sub"   x="130" y="108" text-anchor="middle">lean.nvim · &lt;leader&gt;vv</text>
+
+  <rect class="box" x="40"  y="188" width="180" height="64" rx="10"/>
+  <text class="title" x="130" y="216" text-anchor="middle">you</text>
+  <text class="sub"   x="130" y="236" text-anchor="middle">mic · headphones</text>
+
+  <rect class="box" x="350" y="60"  width="200" height="64" rx="10"/>
+  <text class="title" x="450" y="88" text-anchor="middle">stt daemon</text>
+  <text class="sub"   x="450" y="108" text-anchor="middle">Parakeet · MLX</text>
+
+  <rect class="box" x="350" y="316" width="200" height="64" rx="10"/>
+  <text class="title" x="450" y="344" text-anchor="middle">tts daemon</text>
+  <text class="sub"   x="450" y="364" text-anchor="middle">Kokoro · MLX</text>
+
+  <rect class="box" x="680" y="188" width="180" height="64" rx="10"/>
+  <text class="title" x="770" y="216" text-anchor="middle">claude code</text>
+  <text class="sub"   x="770" y="236" text-anchor="middle">lv-claude · voice prompt</text>
+
+  <rect class="box" x="680" y="316" width="180" height="64" rx="10"/>
+  <text class="title" x="770" y="344" text-anchor="middle">lean-lsp-mcp</text>
+  <text class="sub"   x="770" y="364" text-anchor="middle">goals · diagnostics</text>
+
+  <!-- voice in -->
+  <path class="in" d="M220,92 H346" marker-end="url(#a-in)"/>
+  <text class="label lin" x="283" y="84" text-anchor="middle">float</text>
+  <path class="in" d="M220,210 C290,210 290,112 346,112" marker-end="url(#a-in)"/>
+  <text class="label lin" x="276" y="176" text-anchor="end">speech</text>
+  <path class="in" d="M550,92 C620,92 620,205 676,205" marker-end="url(#a-in)"/>
+  <text class="label lin" x="640" y="128" text-anchor="middle">rex send</text>
+
+  <!-- voice out -->
+  <path class="out" d="M680,236 C620,236 620,348 554,348" marker-end="url(#a-out)"/>
+  <text class="label lout" x="642" y="312" text-anchor="middle">hooks</text>
+  <path class="out" d="M350,348 C290,348 290,236 224,236" marker-end="url(#a-out)"/>
+  <text class="label lout" x="268" y="312" text-anchor="middle">audio</text>
+
+  <!-- lean context -->
+  <path class="ctx" d="M770,252 V312" marker-start="url(#a-ctx)" marker-end="url(#a-ctx)"/>
+  <text class="label lctx" x="782" y="286">MCP</text>
+</svg>
