@@ -1,6 +1,6 @@
 """Local STT daemon: owns the mic, transcribes with Parakeet (MLX), delivers text to Claude.
 
-Editor-neutral: any client (the Neovim plugin, a CLI, later a hotkey app) talks
+Editor- and muxer-neutral: any client (the Neovim plugin, a CLI, later a hotkey app) talks
 to it over a Unix socket with newline-delimited JSON.
 
 Listening modes (persisted in ~/.config/lean-voice/config.json as "listen"):
@@ -9,8 +9,7 @@ Listening modes (persisted in ~/.config/lean-voice/config.json as "listen"):
   wake   always listening for a wake word (not implemented yet)
 
 Requests:
-  {"cmd": "record", "rex_session": "..."}   start a push-to-talk recording on this
-      connection. The daemon streams {"partial": "..."} lines; the client then
+  {"cmd": "record"}   start a push-to-talk recording on this connection. The daemon streams {"partial": "..."} lines; the client then
       sends {"cmd": "send"} (deliver to Claude) or {"cmd": "cancel"} on the same
       connection, and gets {"final": "...", "delivered": bool}.
   {"cmd": "mode"}                 report the mode
@@ -32,7 +31,7 @@ from pathlib import Path
 import numpy as np
 import sounddevice as sd
 
-from lean_voice import tts
+from lean_voice import mux, tts
 
 SOCK = Path(os.environ.get("LEAN_VOICE_STT_SOCK", Path.home() / ".cache/lean-voice/stt.sock"))
 MODEL = os.environ.get("LEAN_VOICE_STT_MODEL", "mlx-community/parakeet-tdt-0.6b-v3")
@@ -78,15 +77,12 @@ class Transcriber:
             return lean_fix(self.model.generate(mel)[0].text)
 
 
-def deliver(text: str, rex_session: str | None) -> bool:
-    """Type the text into the Claude pane and press Enter."""
-    target = os.environ.get("LEAN_VOICE_TARGET", "claude-voice")
-    scope = ["-s", rex_session] if rex_session else []
+def deliver(text: str) -> bool:
+    """Type the text into the registered Claude pane (see lean_voice.mux) and press Enter."""
     try:
-        subprocess.run(["rex", "send", *scope, "-b", target, f"[command] {text}"], check=True, timeout=5)
-        subprocess.run(["rex", "send-key", *scope, "-b", target, "enter"], check=True, timeout=5)
+        mux.deliver(f"[command] {text}")
         return True
-    except (subprocess.SubprocessError, OSError) as exc:
+    except (RuntimeError, KeyError, subprocess.SubprocessError, OSError) as exc:
         print(f"deliver failed: {exc}", flush=True)
         return False
 
@@ -136,7 +132,7 @@ def record(conn: socket.socket, msg: dict, stt: Transcriber) -> None:
         emit({"final": "", "delivered": False, "cancelled": True})
         return
     final = stt(np.concatenate(chunks)) if chunks else ""
-    delivered = bool(final) and deliver(final, msg.get("rex_session"))
+    delivered = bool(final) and deliver(final)
     print(f"heard: {final!r} delivered={delivered}", flush=True)
     emit({"final": final, "delivered": delivered})
 

@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 # Launch a voice-enabled Claude Code session in the current Lean project.
-# Starts the TTS/STT daemons if they aren't running.
+#   1. start the TTS/STT daemons if they aren't running
+#   2. register this pane (tmux, zellij, herdr, cmux or rex) as where voice input goes
+#   3. run claude with the speaking hooks and the voice prompt
 set -euo pipefail
 LV="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
+PY="$LV/.venv/bin/python"
 export LEAN_VOICE_HOME="$LV"  # used by the hook commands in claude/settings.json
-"$LV/bin/lv-daemons"
-# Label this pane so push-to-talk knows where to deliver (LEAN_VOICE_TARGET overrides).
-if [ -n "${REX_BLOCK:-}" ]; then
-  rex block rename -s "$REX_SESSION" "$REX_BLOCK" "${LEAN_VOICE_TARGET:-claude-voice}" >/dev/null 2>&1 || true
-fi
+
+"$PY" -m lean_voice.daemons start
+"$PY" -m lean_voice.mux register
+
 exec claude --ide \
   --settings "$LV/claude/settings.json" \
   --append-system-prompt "$(cat "$LV/claude/voice-prompt.md")" \

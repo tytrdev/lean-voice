@@ -113,7 +113,6 @@ function M.talk()
   state.pipe = pipe
   state.text = ""
   local pending = ""
-  local rex_session = vim.env.REX_SESSION -- read now: vim.env isn't allowed in uv callbacks
   pipe:connect(sock, function(err)
     if err then
       vim.schedule(function()
@@ -135,7 +134,7 @@ function M.talk()
         if ok then vim.schedule(function() on_message(msg) end) end
       end
     end)
-    write({ cmd = "record", rex_session = rex_session })
+    write({ cmd = "record" })
   end)
 end
 
