@@ -59,7 +59,7 @@
   <path class="in" d="M220,210 C290,210 290,112 346,112" marker-end="url(#a-in)"/>
   <text class="label lin" x="276" y="176" text-anchor="end">speech</text>
   <path class="in" d="M550,92 C620,92 620,205 676,205" marker-end="url(#a-in)"/>
-  <text class="label lin" x="640" y="128" text-anchor="middle">rex send</text>
+  <text class="label lin" x="644" y="128" text-anchor="middle">multiplexer</text>
 
   <!-- voice out -->
   <path class="out" d="M680,236 C620,236 620,348 554,348" marker-end="url(#a-out)"/>
