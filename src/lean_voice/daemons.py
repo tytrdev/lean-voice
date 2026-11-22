@@ -110,6 +110,9 @@ def setup() -> None:
     print(f"==> {MODELS['tts']} (text to speech)", flush=True)
     from mlx_audio.tts.utils import load_model
 
+    from lean_voice.tts import fix_espeak_path
+
+    fix_espeak_path()
     list(load_model(MODELS["tts"]).generate(text="Ready.", voice="af_heart", lang_code="a"))
     print(f"\n==> {MODELS['stt']} (speech to text)", flush=True)
     from lean_voice.stt import Transcriber

@@ -37,6 +37,28 @@ GAP = np.zeros(int(0.12 * RATE), dtype=np.float32)  # pause between sentences
 PREVIEW = "Hi, I'm {name}. In the successor case, you need n plus one plus b to equal b plus n plus one."
 
 
+def fix_espeak_path() -> None:
+    """Point espeak-ng (Kokoro's fallback for unknown words) at a short copy of its data.
+
+    espeak-ng silently ignores a data path longer than its fixed buffer (somewhere
+    between 100 and 211 characters) and falls back to a path baked in at build time,
+    which doesn't exist. Plugin installs under long paths hit this.
+    """
+    import shutil
+
+    import espeakng_loader
+    import misaki.espeak  # noqa: F401  (sets the data path on import; override it after)
+    from phonemizer.backend.espeak.wrapper import EspeakWrapper
+
+    src = espeakng_loader.get_data_path()
+    if len(src) <= 100:
+        return
+    dst = Path.home() / ".cache/lean-voice/espeak-ng-data"
+    if not (dst / "phontab").exists():
+        shutil.copytree(src, dst, dirs_exist_ok=True)
+    EspeakWrapper.set_data_path(str(dst))
+
+
 def config() -> dict:
     try:
         return {**DEFAULTS, **json.loads(CONFIG.read_text())}
@@ -162,6 +184,7 @@ class Speaker:
     def __init__(self) -> None:
         from mlx_audio.tts.utils import load_model
 
+        fix_espeak_path()
         self.model = load_model(MODEL)
         self.player = Player()
         self.text_q: queue.Queue[tuple[int, str, str, float]] = queue.Queue()
