@@ -9,6 +9,7 @@ authors = [
 license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
+    "en-core-web-sm",
     "misaki[en]>=0.9.4",
     "mlx-audio>=0.6.7",
     "parakeet-mlx>=0.7.0",
@@ -18,3 +19,6 @@ dependencies = [
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
