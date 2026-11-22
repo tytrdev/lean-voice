@@ -101,7 +101,7 @@ local function on_message(msg)
 end
 
 local function not_running()
-  vim.notify("lean-voice: daemons aren't running. Start them with :LeanVoice start", vim.log.levels.WARN)
+  vim.notify("lean-voice: daemons aren't running. Start them with :LeanVoice start (first time: :LeanVoice setup)", vim.log.levels.WARN)
 end
 
 --- Start a push-to-talk recording with a live transcript float.
@@ -196,20 +196,42 @@ function M.choose_voice()
   float_term({ root .. "/bin/lv-voice" })
 end
 
---- Start (or with restart=true, restart) the TTS and STT daemons.
-function M.start(restart)
-  local args = { root .. "/bin/lv-daemons" }
-  if restart then table.insert(args, "restart") end
-  vim.notify("lean-voice: starting daemons…")
-  vim.system(args, { text = true }, function(res)
+local function daemons(args, done_msg)
+  vim.system(vim.list_extend({ root .. "/bin/lv-daemons" }, args), { text = true }, function(res)
     vim.schedule(function()
       if res.code == 0 then
-        vim.notify("lean-voice: daemons ready")
+        if done_msg then vim.notify("lean-voice: " .. done_msg) end
       else
-        vim.notify("lean-voice: " .. vim.trim(res.stderr or ""), vim.log.levels.ERROR)
+        vim.notify(vim.trim(res.stderr or ""), vim.log.levels.ERROR)
       end
     end)
   end)
+end
+
+--- Start the daemons (no-op for ones already running).
+function M.start() daemons({ "start" }, "daemons running") end
+--- Stop the daemons.
+function M.stop() daemons({ "stop" }, "daemons stopped") end
+--- Restart the daemons.
+function M.restart() daemons({ "restart" }, "daemons restarted") end
+
+--- First run: download the models (~2.9 GB) in a floating terminal.
+function M.setup_models() float_term({ root .. "/bin/lv-daemons", "setup" }) end
+
+--- Show daemon and model status.
+function M.status()
+  local res = vim.system({ root .. "/bin/lv-daemons", "status" }, { text = true }):wait()
+  vim.notify(vim.trim((res.stdout or "") .. (res.stderr or "")))
+end
+
+--- Open the daemon logs.
+function M.logs()
+  local dir = vim.fn.expand("~/.cache/lean-voice/")
+  vim.cmd.tabnew(dir .. "stt.log")
+  vim.cmd.vsplit(dir .. "tts.log")
+  for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+    vim.api.nvim_win_call(w, function() vim.cmd("normal! G") end)
+  end
 end
 
 -- ---------------------------------------------------------------- setup
@@ -230,8 +252,12 @@ local subcommands = {
   talk = M.talk,
   toggle = M.toggle_listening,
   voice = M.choose_voice,
-  start = function() M.start(false) end,
-  restart = function() M.start(true) end,
+  setup = M.setup_models,
+  start = M.start,
+  stop = M.stop,
+  restart = M.restart,
+  status = M.status,
+  logs = M.logs,
 }
 
 function M.setup(opts)
@@ -248,7 +274,7 @@ function M.setup(opts)
   end, {
     nargs = 1,
     complete = function() return vim.tbl_keys(subcommands) end,
-    desc = "lean-voice: talk | toggle | voice | start | restart",
+    desc = "lean-voice: talk | toggle | voice | setup | start | stop | restart | status | logs",
   })
 end
 

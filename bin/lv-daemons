@@ -1,31 +1,5 @@
 #!/usr/bin/env bash
-# Ensure the lean-voice daemons (tts, stt) are running, each as a tab in a hidden
-# Rex session "lean-voice-daemons". `lv-daemons restart` restarts them.
+# start | stop | restart | status | setup   (see src/lean_voice/daemons.py)
 set -euo pipefail
 LV="$(cd "$(dirname "$(realpath "$0")")/.." && pwd)"
-PY="$LV/.venv/bin/python"
-SESSION=lean-voice-daemons
-
-alive() { "$PY" -c "import socket,sys; socket.socket(socket.AF_UNIX).connect(sys.argv[1])" "$HOME/.cache/lean-voice/$1.sock" 2>/dev/null; }
-session_id() { rex ls --json | jq -r ".sessions[]? | select(.label==\"$SESSION\") | .session_id" | head -1; }
-
-if [ "${1:-}" = restart ]; then
-  id=$(session_id); [ -n "$id" ] && rex kill "$id" >/dev/null
-  for _ in $(seq 1 50); do [ -z "$(session_id)" ] && break; sleep 0.1; done  # kill is async
-  rm -f "$HOME/.cache/lean-voice/"{tts,stt}.sock
-fi
-
-for d in tts stt; do
-  alive $d && continue
-  id=$(session_id)
-  if [ -z "$id" ]; then
-    rex new "$SESSION" -c "$LV" --window "$d" --keep-open --json -- "$PY" -m "lean_voice.$d" serve >/dev/null
-  else
-    rex window new -s "$id" "$d" -c "$LV" --keep-open --focus=false --json -- "$PY" -m "lean_voice.$d" serve >/dev/null
-  fi
-done
-
-for d in tts stt; do
-  for _ in $(seq 1 60); do alive $d && break; sleep 0.5; done
-  alive $d || { echo "lean-voice: $d daemon didn't start (see Rex session $SESSION)" >&2; exit 1; }
-done
+exec "$LV/.venv/bin/python" -m lean_voice.daemons "${1:-start}" "${@:2}"
