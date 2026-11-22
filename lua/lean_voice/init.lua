@@ -195,6 +195,8 @@ function M.choose_voice()
   float_term({ root .. "/bin/lv-voice" })
 end
 
+M.root = root
+
 local function daemons(args, done_msg)
   vim.system(vim.list_extend({ root .. "/bin/lv-daemons" }, args), { text = true }, function(res)
     vim.schedule(function()

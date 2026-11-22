@@ -1,0 +1,105 @@
+*lean-voice.txt*  Talk to Claude Code about Lean proofs
+
+==============================================================================
+CONTENTS                                                  *lean-voice-contents*
+
+  1. Overview ............................................ |lean-voice-overview|
+  2. Setup ............................................... |lean-voice-setup|
+  3. Usage ............................................... |lean-voice-usage|
+  4. Commands ............................................ |lean-voice-commands|
+  5. Options ............................................. |lean-voice-options|
+  6. Multiplexers ........................................ |lean-voice-mux|
+  7. Files ............................................... |lean-voice-files|
+
+==============================================================================
+1. OVERVIEW                                               *lean-voice-overview*
+
+lean-voice connects Neovim, Claude Code and two local speech daemons:
+
+  stt daemon   records the mic, transcribes with Parakeet (MLX), and types
+               the text into Claude's pane through your terminal multiplexer
+  tts daemon   speaks Claude's replies with Kokoro (MLX)
+  hooks        Claude Code hooks send new reply text to the tts daemon
+
+Requires Apple Silicon macOS, Neovim 0.11+, uv, fzf, the `claude` CLI and a
+supported multiplexer (|lean-voice-mux|).
+
+==============================================================================
+2. SETUP                                                     *lean-voice-setup*
+
+1. Install with lazy.nvim, with `build = "uv sync"`. See the README.
+2. Download the models once (about 2.9 GB): >vim
+     :LeanVoice setup
+<3. Give Claude the Lean tools: >sh
+     claude mcp add --scope user lean-lsp -- uvx lean-lsp-mcp
+<4. Put the launcher on your PATH: >sh
+     ln -s ~/.local/share/nvim/lazy/lean-voice/bin/lv-claude ~/.local/bin/
+<5. Check everything: >vim
+     :checkhealth lean_voice
+<
+==============================================================================
+3. USAGE                                                     *lean-voice-usage*
+
+In a Lean project, open Neovim in one pane and run `lv-claude` from the same
+directory in another. `lv-claude` starts the daemons, registers its pane as
+the destination for voice input, and starts Claude with the hooks and the
+voice prompt. Other Claude sessions are not affected.
+
+Press <leader>vv, speak, and press <CR> to send or <Esc> to cancel. The float
+shows the transcript as you talk. Starting a recording stops any speech.
+
+==============================================================================
+4. COMMANDS                                               *lean-voice-commands*
+
+                                                                  *:LeanVoice*
+:LeanVoice talk        Push to talk.
+:LeanVoice toggle      Turn listening off (the mic never opens) or back on.
+:LeanVoice voice       Pick a voice; moving the cursor plays a sample.
+:LeanVoice setup       Download the models (first run).
+:LeanVoice start       Start the daemons.
+:LeanVoice stop        Stop the daemons.
+:LeanVoice restart     Restart the daemons.
+:LeanVoice status      Show daemon and model status.
+:LeanVoice logs        Open the daemon logs.
+
+==============================================================================
+5. OPTIONS                                                 *lean-voice-options*
+
+Defaults: >lua
+  require("lean_voice").setup({
+    autosave = true,
+    keys = { talk = "<leader>vv", toggle = "<leader>vo", voice = "<leader>vc" },
+  })
+<
+autosave    Save `*.lean` buffers when you pause. lean-lsp-mcp reads files
+            from disk, so without this Claude sees stale code.
+keys        Set any key to `false` to skip that mapping.
+
+Voice settings are in `~/.config/lean-voice/config.json` and apply to the next
+reply: `voice`, `speed` (default 1.1) and `listen` (`ptt` or `off`).
+
+==============================================================================
+6. MULTIPLEXERS                                                *lean-voice-mux*
+
+Voice input is typed into Claude's pane by the multiplexer it runs in. The
+first match wins, innermost first:
+
+  tmux     TMUX_PANE          tmux send-keys
+  zellij   ZELLIJ_PANE_ID     zellij action write-chars --pane-id (tested on 0.45)
+  herdr    HERDR_PANE_ID      herdr pane send-text
+  cmux     CMUX_SURFACE_ID    cmux send (untested)
+  rex      REX_BLOCK          rex send
+
+Set `LEAN_VOICE_MUX` to force one. Adapters live in
+`src/lean_voice/mux.py`; a new one is a class with a detect variable and the
+commands that type text and press Enter.
+
+==============================================================================
+7. FILES                                                     *lean-voice-files*
+
+~/.config/lean-voice/config.json     voice, speed, listening mode
+~/.cache/lean-voice/target.json      the registered Claude pane
+~/.cache/lean-voice/{stt,tts}.log    daemon logs
+~/.cache/lean-voice/{stt,tts}.sock   daemon sockets (newline-delimited JSON)
+
+ vim:tw=78:ts=8:ft=help:norl:
