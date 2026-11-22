@@ -1,0 +1,13 @@
+# Fails when the README's install snippets are stale relative to install.spec.lua.
+# Verify (installing every snippet under each manager) is off: it would run
+# `uv sync` with MLX in eight parallel jobs.
+name: install snippets
+on: [push, pull_request]
+jobs:
+  install-snippets:
+    runs-on: macos-latest  # MLX is Apple Silicon only
+    steps:
+      - uses: actions/checkout@v7
+      - uses: tytrdev/nvim-install-snippets@v1.1.0
+        with:
+          verify: "false"
